@@ -3,24 +3,31 @@ NAME
 
 SYNOPSIS
      use Class::Params qw(params);
-     params($self, $def, $input_array);
+     params($self, $def_hr, $params_ar);
 
 DEFINITION FORMAT
      There is hash with parameters.
-     internal_name => [real_name, class, possible_types, requirement]
+     internal_name => [real_name, possible_types, requirement]
 
      Example:
-     'par1' => ['_par1', undef, 'SCALAR', 1],
-     'par2' => ['_par2', undef, ['SCALAR', 'HASH'], 0],
-     'par3' => ['_par3', 'Class', ['SCALAR', 'Class'], 0],
+     'par1' => ['_par1', 'SCALAR', 1],
+     'par2' => ['_par2', ['SCALAR', 'HASH'], 0],
+     'par3' => ['_par3', ['SCALAR', 'Class'], 0],
 
 SUBROUTINES
-    params($self, $def, $input_array)
+    "params($self, $def_hr, $params_ar)"
              Check for structure over definition and save input data to $self.
              Parameters:
              $self - Structure, for data save.
-             $def - Definition hash ref.
-             $input_array - Array of key-value pairs.
+             $def_hr - Definition hash ref.
+             $params_ar - Reference to array of key-value pairs.
+             Returns undef.
+
+ERRORS
+     params():
+             Bad parameter '%s' type.
+             Parameter '%s' is required.
+             Unknown parameter '%s'.
 
 EXAMPLE1
      # Pragmas.
@@ -32,13 +39,13 @@ EXAMPLE1
 
      # Definition.
      my $self = {};
-     my $def = {
-             'par' => ['par', undef, 'SCALAR', 1],
+     my $def_hr = {
+             'par' => ['par', 'SCALAR', 1],
      };
 
      # Check.
      # output_structure, definition, array of pairs (key, value).
-     params($self, $def, ['bad_par', 1]);
+     params($self, $def_hr, ['bad_par', 1]);
 
      # Output:
      # Unknown parameter 'bad_par'.
@@ -54,13 +61,13 @@ EXAMPLE2
 
      # Definition.
      my $self = {};
-     my $def = {
-             'par' => ['par', undef, 'SCALAR', 1],
+     my $def_hr = {
+             'par' => ['par', 'SCALAR', 1],
      };
 
      # Check.
      # output_structure, definition, array of pairs (key, value).
-     params($self, $def, ['par', 1]);
+     params($self, $def_hr, ['par', 1]);
 
      # Dump $self.
      p $self;
@@ -83,5 +90,5 @@ LICENSE AND COPYRIGHT
     BSD license.
 
 VERSION
-    0.01
+    0.02
 
