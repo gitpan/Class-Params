@@ -14,7 +14,7 @@ use Scalar::Util qw(blessed);
 Readonly::Array our @EXPORT_OK => qw(params);
 
 # Version.
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 # Params processing.
 sub params {
@@ -32,11 +32,16 @@ sub params {
 		}
 
 		# Check type.
-		if (! _check_type($val, $def_hr->{$key}->[1])) {
+		if (! _check_type($val, $def_hr->{$key}->[2])) {
 			err "Bad parameter '$key' type.";
 		}
 
-		# Add value to self.
+		# Check class.
+		if (! _check_class($val, $def_hr->{$key}->[1])) {
+			err "Bad parameter '$key' class.";
+		}
+
+		# Add value to class.
 		$self->{$def_hr->{$key}->[0]} = $val;
 
 		# Processed keys.
@@ -44,7 +49,7 @@ sub params {
         }
 
 	# Check requirement.
-	foreach my $req (map { $def_hr->{$_}->[2] ? $_ : () } keys %{$def_hr}) {
+	foreach my $req (map { $def_hr->{$_}->[3] ? $_ : () } keys %{$def_hr}) {
 		if (! grep { $req eq $_ } @processed) {
 			err "Parameter '$req' is required.";
 		}
@@ -85,6 +90,39 @@ sub _check_type_one {
 	}
 }
 
+# Check class.
+# Class: CLASS/undef.
+sub _check_class {
+	my ($value, $class_name) = @_;
+	if ($class_name) {
+
+		# Array.
+		if (ref $value eq 'ARRAY') {
+			foreach (@{$value}) {
+				if (! _check_class($_, $class_name)) {
+					return 0;
+				}
+			}
+			return 1;
+		# One.
+		} else {
+			return _check_class_one($value, $class_name);
+		}
+	} else {
+		return 1;
+	}
+}
+
+# Check ref to class.
+sub _check_class_one {
+	my ($class, $class_name) = @_;
+	if (! blessed($class) || ! $class->isa($class_name)) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 1;
 
 =pod
@@ -103,12 +141,12 @@ sub _check_type_one {
 =head1 DEFINITION FORMAT
 
  There is hash with parameters.
- internal_name => [real_name, possible_types, requirement]
+ internal_name => [real_name, class, possible_types, requirement]
 
  Example:
- 'par1' => ['_par1', 'SCALAR', 1],
- 'par2' => ['_par2', ['SCALAR', 'HASH'], 0],
- 'par3' => ['_par3', ['SCALAR', 'Class'], 0],
+ 'par1' => ['_par1', undef, 'SCALAR', 1],
+ 'par2' => ['_par2', undef, ['SCALAR', 'HASH'], 0],
+ 'par3' => ['_par3', 'Class', ['SCALAR', 'Class'], 0],
 
 =head1 SUBROUTINES
 
@@ -144,7 +182,7 @@ sub _check_type_one {
  # Definition.
  my $self = {};
  my $def_hr = {
-         'par' => ['par', 'SCALAR', 1],
+         'par' => ['_par', undef, 'SCALAR', 1],
  };
 
  # Check.
@@ -167,7 +205,7 @@ sub _check_type_one {
  # Definition.
  my $self = {};
  my $def_hr = {
-         'par' => ['par', 'SCALAR', 1],
+         'par' => ['_par', undef, 'SCALAR', 1],
  };
 
  # Check.
@@ -179,7 +217,68 @@ sub _check_type_one {
 
  # Output:
  # \ {
- #     par   1
+ #     _par   1
+ # }
+
+=head1 EXAMPLE3
+
+ # Pragmas.
+ use strict;
+ use warnings;
+
+ # Modules.
+ use Class::Params qw(params);
+
+ # Definition.
+ my $self = {};
+ my $def_hr = {
+         'par' => ['_par', 'Moo', ['ARRAY', 'Moo'], 0],
+ };
+
+ # Fake class.
+ my $moo = bless {}, 'Moo';
+
+ # Check bad 'par' parameter which has bad 'bar' scalar.
+ params($self, $def_hr, ['par', [$moo, 'bar']]);
+
+ # Output like:
+ # Bad parameter 'par' class.
+
+=head1 EXAMPLE4
+
+ # Pragmas.
+ use strict;
+ use warnings;
+
+ # Modules.
+ use Class::Params qw(params);
+ use Data::Printer;
+
+ # Definition.
+ my $self = {};
+ my $def_hr = {
+         'par' => ['_par', 'Moo', ['ARRAY', 'Moo'], 0],
+ };
+
+ # Fake class.
+ my $moo = bless {}, 'Moo';
+
+ # Check right 'par' parameter which has array of 'Moo' objects.
+ params($self, $def_hr, ['par', [$moo, $moo]]);
+
+ # Dump $self.
+ p $self;
+
+ # Output like:
+ # \ {
+ #     _par   [
+ #         [0] Moo  {
+ #             public methods (0)
+ #             private methods (0)
+ #             internals: {}
+ #         },
+ #         [1] var{_par}[0]
+ #     ]
  # }
 
 =head1 DEPENDENCIES
@@ -203,6 +302,6 @@ BSD license.
 
 =head1 VERSION
 
-0.02
+0.03
 
 =cut

@@ -7,12 +7,12 @@ SYNOPSIS
 
 DEFINITION FORMAT
      There is hash with parameters.
-     internal_name => [real_name, possible_types, requirement]
+     internal_name => [real_name, class, possible_types, requirement]
 
      Example:
-     'par1' => ['_par1', 'SCALAR', 1],
-     'par2' => ['_par2', ['SCALAR', 'HASH'], 0],
-     'par3' => ['_par3', ['SCALAR', 'Class'], 0],
+     'par1' => ['_par1', undef, 'SCALAR', 1],
+     'par2' => ['_par2', undef, ['SCALAR', 'HASH'], 0],
+     'par3' => ['_par3', 'Class', ['SCALAR', 'Class'], 0],
 
 SUBROUTINES
     "params($self, $def_hr, $params_ar)"
@@ -40,7 +40,7 @@ EXAMPLE1
      # Definition.
      my $self = {};
      my $def_hr = {
-             'par' => ['par', 'SCALAR', 1],
+             'par' => ['_par', undef, 'SCALAR', 1],
      };
 
      # Check.
@@ -62,7 +62,7 @@ EXAMPLE2
      # Definition.
      my $self = {};
      my $def_hr = {
-             'par' => ['par', 'SCALAR', 1],
+             'par' => ['_par', undef, 'SCALAR', 1],
      };
 
      # Check.
@@ -74,7 +74,66 @@ EXAMPLE2
 
      # Output:
      # \ {
-     #     par   1
+     #     _par   1
+     # }
+
+EXAMPLE3
+     # Pragmas.
+     use strict;
+     use warnings;
+
+     # Modules.
+     use Class::Params qw(params);
+
+     # Definition.
+     my $self = {};
+     my $def_hr = {
+             'par' => ['_par', 'Moo', ['ARRAY', 'Moo'], 0],
+     };
+
+     # Fake class.
+     my $moo = bless {}, 'Moo';
+
+     # Check bad 'par' parameter which has bad 'bar' scalar.
+     params($self, $def_hr, ['par', [$moo, 'bar']]);
+
+     # Output like:
+     # Bad parameter 'par' class.
+
+EXAMPLE4
+     # Pragmas.
+     use strict;
+     use warnings;
+
+     # Modules.
+     use Class::Params qw(params);
+     use Data::Printer;
+
+     # Definition.
+     my $self = {};
+     my $def_hr = {
+             'par' => ['_par', 'Moo', ['ARRAY', 'Moo'], 0],
+     };
+
+     # Fake class.
+     my $moo = bless {}, 'Moo';
+
+     # Check right 'par' parameter which has array of 'Moo' objects.
+     params($self, $def_hr, ['par', [$moo, $moo]]);
+
+     # Dump $self.
+     p $self;
+
+     # Output like:
+     # \ {
+     #     _par   [
+     #         [0] Moo  {
+     #             public methods (0)
+     #             private methods (0)
+     #             internals: {}
+     #         },
+     #         [1] var{_par}[0]
+     #     ]
      # }
 
 DEPENDENCIES
@@ -90,5 +149,5 @@ LICENSE AND COPYRIGHT
     BSD license.
 
 VERSION
-    0.02
+    0.03
 

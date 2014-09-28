@@ -1,3 +1,12 @@
+0.03 2014-09-28T11:21:33+02:00
+ - CHANGE API: Back to 0.01 version. :/
+ - Add EXAMPLE sections to doc.
+ - Add tests for class checks.
+ - Fix Class check.
+ - Improve EXAMPLEs in doc.
+ - Rename $class variable to $class_name.
+ - Rename $ref to $class variable.
+
 0.02 2014-09-28T09:40:50+02:00
  - CHANGE API: Simplify definition.
  - Add ERRORS section to doc.
